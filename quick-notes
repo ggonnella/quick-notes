@@ -17,7 +17,7 @@ function pull_data_file {
 }
 
 hn=$(hostname)
-SFX={$NETWORK-$hn}
+SFX=${NETWORK-$hn}
 
 ### Handle direct call
 
