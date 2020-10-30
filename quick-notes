@@ -16,6 +16,9 @@ function pull_data_file {
   timeout 2 git pull > /dev/null 2>&1
 }
 
+hn=$(hostname)
+SFX={$NETWORK-$hn}
+
 ### Handle direct call
 
 if [ "$QUICKNOTES_PURPOSE" == "" \
@@ -32,7 +35,7 @@ if [ "$QUICKNOTES_PURPOSE" == "" \
   echo "- QUICKNOTES_CMDNAME: command name" > /dev/stderr
   echo > /dev/stderr
   echo "Optional variables control the group names" > /dev/stderr
-  echo "- QUICKNOTES_GRP_HOST=yes    # => use hostname in group names" > /dev/stderr
+  echo "- QUICKNOTES_GRP_HOST=yes    # => use NETWORK/hostname in group names" > /dev/stderr
   echo "- QUICKNOTES_GRP_REQTAG=yes  # => use first word in line as tag in group names" > /dev/stderr
   echo "- QUICKNOTES_GRP_DATE=no     # => do not use data in group names" > /dev/stderr
   echo "- QUICKNOTES_ENABLE_URL=yes  # => allow to store a URL with -u" > /dev/stderr
@@ -170,7 +173,7 @@ else
   grpinfo=""
   tags=""
   if [ "$QUICKNOTES_GRP_HOST" == "yes" ]; then
-    grpinfo+=$(hostname)
+    grpinfo+=${SFX}
     tags+=$grpinfo
   fi
   if [ "$QUICKNOTES_GRP_REQTAG" == "yes" ]; then
@@ -179,7 +182,7 @@ else
     if [ "$#" -eq 0 ]; then
       wantedpfx='^\['
       if [ "$QUICKNOTES_GRP_HOST" == "yes" ]; then
-        wantedpfx+=$(hostname)
+        wantedpfx+=${SFX}
         wantedpfx+=' \/ '
       fi
       wantedpfx+="$reqtag"
