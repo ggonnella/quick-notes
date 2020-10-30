@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# version: 1.0
+# (c) Giorgio Gonnella, 2020
+
+# %-PURPOSE-%
+purpose="Store a bookmark with a short note"
+export QUICKNOTES_PURPOSE=$purpose
+export QUICKNOTES_DATAFILE="bookmark"
+export QUICKNOTES_CMDNAME="bookmark"
+quick-notes $*

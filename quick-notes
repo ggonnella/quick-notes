@@ -1,0 +1,228 @@
+#!/usr/bin/env bash
+# version: 1.0
+# (c) Giorgio Gonnella, 2020
+
+function push_data_file {
+  cd $DATA_DIR
+  git add $DATA_FILE > /dev/null 2>&1
+  git commit -m"update $(basename $DATA_FILE)" > /dev/null 2>&1
+  timeout 2 git ls-remote -h origin HEAD > /dev/null 2>&1
+  if [ $? -ne 0 ]; then return 1; fi
+  git push > /dev/null 2>&1
+}
+
+function pull_data_file {
+  cd $DATA_DIR
+  timeout 2 git pull > /dev/null 2>&1
+}
+
+### Handle direct call
+
+if [ "$QUICKNOTES_PURPOSE" == "" \
+     -o "$QUICKNOTES_DATAFILE" == "" \
+     -o "$QUICKNOTES_CMDNAME" == "" ]; then
+  echo > /dev/stderr
+  # %-PURPOSE-%
+  echo "General purpose script for storing quick 1-line synchronized notes" > /dev/stderr
+  echo "See scripts under <scripts>/notes" > /dev/stderr
+  echo > /dev/stderr
+  echo "Variables to set" > /dev/stderr
+  echo "- QUICKNOTES_PURPOSE: one-line purpose statement" > /dev/stderr
+  echo "- QUICKNOTES_DATAFILE: data file name" > /dev/stderr
+  echo "- QUICKNOTES_CMDNAME: command name" > /dev/stderr
+  echo > /dev/stderr
+  echo "Optional variables control the group names" > /dev/stderr
+  echo "- QUICKNOTES_GRP_HOST=yes    # => use hostname in group names" > /dev/stderr
+  echo "- QUICKNOTES_GRP_REQTAG=yes  # => use first word in line as tag in group names" > /dev/stderr
+  echo "- QUICKNOTES_GRP_DATE=no     # => do not use data in group names" > /dev/stderr
+  echo "- QUICKNOTES_ENABLE_URL=yes  # => allow to store a URL with -u" > /dev/stderr
+  echo > /dev/stderr
+  exit 1
+fi
+
+### Help, called by --help/-h
+
+groupedby=""
+rt=""
+nrt="      "
+if [ "$QUICKNOTES_GRP_HOST" == "yes" ]; then
+  groupedby="hostname"
+  help1="current host and "
+fi
+if [ "$QUICKNOTES_GRP_REQTAG" == "yes" ]; then
+  if [ "$groupedby" != "" ]; then
+    groupedby+=" / "
+  fi
+  groupedby+="category"
+  rt="<category>|<category> "
+  rt2="<cat> "
+  nrt=""
+fi
+if [ "$QUICKNOTES_GRP_DATE" != "no" ]; then
+  if [ "$groupedby" != "" ]; then
+    groupedby+=" / "
+  fi
+  groupedby+="date"
+fi
+if [ "$QUICKNOTES_ENABLE_URL" == "yes" ]; then
+  urlopt="-u <url>"
+fi
+
+if [ "$1" == '--help' -o "$1" == "-h" ]; then
+  # %-PURPOSE-%
+  echo > /dev/stderr
+  echo $QUICKNOTES_PURPOSE > /dev/stderr
+  echo > /dev/stderr
+  echo "Usage: $QUICKNOTES_CMDNAME [$rt<line>|--vi|-t <tag>|${urlopt}-a <tag>|--tags]" > /dev/stderr
+  echo > /dev/stderr
+  echo "Options:" > /dev/stderr
+  echo > /dev/stderr
+  echo "  (empty)       show lines, grouped by $groupedby" > /dev/stderr
+  if [ "$QUICKNOTES_GRP_REQTAG" == "yes" ]; then
+    echo "  <cat>         show lines of ${help1}category cat" > /dev/stderr
+  fi
+  echo "  -t <tag>      show only lines tagged by <tag>" > /dev/stderr
+  echo "  $rt2<line>$nrt  add line (prefixed by $groupedby)" > /dev/stderr
+  echo "  -a <tag>      add a tag to last line added" > /dev/stderr
+  if [ "$QUICKNOTES_ENABLE_URL" == "yes" ]; then
+    echo "  -u <url>      add an URL to the last line" > /dev/stderr
+  fi
+  echo "  --tags        list tags used until now" > /dev/stderr
+  echo "  --vi          open in vi editor" > /dev/stderr
+  echo > /dev/stderr
+  exit 1
+fi
+
+### Hard-coded parameters
+
+DATA_DIR=${XDG_DATA_DIR:=$HOME/.local/share}/ggscripts
+mkdir -p $DATA_DIR
+DATA_FILE=$DATA_DIR/$QUICKNOTES_DATAFILE
+touch $DATA_FILE
+
+### First, try to pull the repository
+
+if [ -d $DATA_DIR/.git ]; then
+  pull_data_file
+  if [ "$?" -ne 0 ]; then
+    echo "[ Warning: you are offline, modifications will not be synchronized ]" > /dev/stderr
+  elif [ -e ${DATA_FILE}_not_sync ]; then
+    push_data_file && rm ${DATA_FILE}_not_sync
+  fi
+fi
+modified="false"
+
+### Display notes, edit notes file, add a new note or add a tag to last note
+
+if [ "$1" == "" ]; then
+  echo
+  while read line; do
+    item=$(echo "$line" | grep -o -P '^[^\t]+')
+    echo -n "$item"
+    while read url; do
+      if [ "$url " != "" ]; then
+        echo -n " -> $url "
+      fi
+    done < <(echo "$line" | grep -o -P '(?<=URL:)[^,\t]+')
+    echo
+  done < ${DATA_FILE} | sort -t']' -k 1,1 --stable
+  echo
+elif [ "$1" == '--vi' ]; then
+  vi $DATA_FILE
+  modified="true"
+elif [ "$1" == '-t' ]; then
+  grep -i -P "\tTAGS.*[:,]$2($|,)" $DATA_FILE | \
+    cut -d$'\t' -f 1 | uniq --group -w 12
+elif [ "$1" == '--tags' ]; then
+  grep -o -P "(?<=\tTAGS:).*" $DATA_FILE | \
+    sed 's/,/\n/g' | grep -v "^URL:" | sort -u
+elif [ "$1" == "-a" -o \
+      \( "$QUICKNOTES_ENABLE_URL" == "yes" -a "$1" == "-u" \) ]; then
+  last_line_existing_tags=`tail -n 1 $DATA_FILE | cut -d$'\t' -s -f 2`
+  last_line_wo_tags=`tail -n 1 $DATA_FILE | cut -d$'\t' -f 1`
+  if [ "$last_line_existing_tags" == "" ]; then
+    last_line_existing_tags="TAGS:"
+  else
+    last_line_existing_tags+=","
+  fi
+  head -n-1 $DATA_FILE > $DATA_FILE.tmp
+  echo -n "$last_line_wo_tags" >> $DATA_FILE.tmp
+  echo -e -n "\t" >> $DATA_FILE.tmp
+  echo -n "$last_line_existing_tags" >> $DATA_FILE.tmp
+  if [ "$1" == "-a" ]; then
+    shift
+    for elem in $*; do
+      echo -n "$elem" >> $DATA_FILE.tmp
+      shift
+      if [ $# -gt 0 ]; then
+        echo -n "," >> $DATA_FILE.tmp
+      fi
+    done
+  else # -u <url>
+    url=$2
+    echo -n "URL:$url" >> $DATA_FILE.tmp
+  fi
+  echo >> $DATA_FILE.tmp
+  mv $DATA_FILE.tmp $DATA_FILE
+  echo "$* tags added to '$last_line_wo_tags'"
+  modified="true"
+else
+  grpinfo=""
+  tags=""
+  if [ "$QUICKNOTES_GRP_HOST" == "yes" ]; then
+    grpinfo+=$(hostname)
+    tags+=$grpinfo
+  fi
+  if [ "$QUICKNOTES_GRP_REQTAG" == "yes" ]; then
+    reqtag=$1
+    shift
+    if [ "$#" -eq 0 ]; then
+      wantedpfx='^\['
+      if [ "$QUICKNOTES_GRP_HOST" == "yes" ]; then
+        wantedpfx+=$(hostname)
+        wantedpfx+=' \/ '
+      fi
+      wantedpfx+="$reqtag"
+      if [ "$QUICKNOTES_GRP_DATE" != "no" ]; then
+        wantedpfx+=' \/ \d{4}-\d{2}-\d{2}'
+      fi
+      wantedpfx+='\]'
+      echo
+      cut -d$'\t' -f 1 $DATA_FILE | \
+        grep -P "$wantedpfx" | \
+        sort -t']' -k 1,1 --stable
+      echo
+      exit 0
+    fi
+    if [ "$grpinfo" != "" ]; then
+      grpinfo="$grpinfo / "
+      tags="$tags,"
+    fi
+    grpinfo+=$reqtag
+    tags+="$reqtag"
+  fi
+  if [ "$QUICKNOTES_GRP_DATE" != "no" ]; then
+    if [ "$grpinfo" != "" ]; then
+      grpinfo="$grpinfo / "
+    fi
+    grpinfo+=`date +"%Y-%m-%d"`
+  fi
+  if [ "$tags" != "" ]; then
+    tags="\tTAGS:$tags"
+  fi
+  echo -e "[$grpinfo] $*$tags" >> $DATA_FILE
+  echo "'$*' was added [$grpinfo]"
+  modified="true"
+fi
+
+### If modified, try to push the repository
+
+if [ "$modified" == "true" ]; then
+  if [ -d $DATA_DIR/.git ]; then
+    push_data_file
+    if [ "$?" -ne 0 ]; then
+      echo "Warning: data was not synchronized, as you are offline" > /dev/stderr
+      touch ${DATA_FILE}_not_sync
+    fi
+  fi
+fi

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# version: 1.0
+# (c) Giorgio Gonnella, 2020
+
+# %-PURPOSE-%
+purpose="Store a line regarding something learned today"
+export QUICKNOTES_PURPOSE=$purpose
+export QUICKNOTES_DATAFILE="learned_items"
+export QUICKNOTES_CMDNAME="learned"
+export QUICKNOTES_ENABLE_URL="yes"
+quick-notes $*

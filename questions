@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# version: 1.0
+# (c) Giorgio Gonnella, 2020
+
+# %-PURPOSE-%
+purpose="Store a line regarding an open question"
+export QUICKNOTES_PURPOSE=$purpose
+export QUICKNOTES_DATAFILE="open_questions"
+export QUICKNOTES_CMDNAME="questions"
+quick-notes $*

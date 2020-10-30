@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# version: 1.0
+# (c) Giorgio Gonnella, 2020
+
+# %-PURPOSE-%
+purpose="Store a line regarding a program installation"
+export QUICKNOTES_PURPOSE=$purpose
+export QUICKNOTES_DATAFILE="installed"
+export QUICKNOTES_CMDNAME="installed"
+export QUICKNOTES_GRP_HOST="yes"
+export QUICKNOTES_GRP_REQTAG="yes"
+quick-notes $*
