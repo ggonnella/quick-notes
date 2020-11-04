@@ -17,7 +17,7 @@ function pull_data_file {
 }
 
 hn=$(hostname)
-SFX=${NETWORK-$hn}
+SFX=${NETWORK:=$hn}
 
 ### Handle direct call
 
@@ -122,11 +122,11 @@ if [ "$1" == "" ]; then
   while read line; do
     item=$(echo "$line" | grep -o -P '^[^\t]+')
     echo -n "$item"
-    while read url; do
+    echo "$line" | grep -o -P '(?<=URL:)[^,\t]+' | while read url; do
       if [ "$url " != "" ]; then
         echo -n " -> $url "
       fi
-    done < <(echo "$line" | grep -o -P '(?<=URL:)[^,\t]+')
+    done
     echo
   done < ${DATA_FILE} | sort -t']' -k 1,1 --stable
   echo
