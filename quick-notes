@@ -132,7 +132,7 @@ if [ "$1" == "" ]; then
   done < ${DATA_FILE} | sort -t']' -k 1,1 --stable
   echo
 elif [ "$1" == '--vi' ]; then
-  vi $DATA_FILE
+  vim $DATA_FILE
   modified="true"
 elif [ "$1" == '--path' ]; then
   echo $DATA_FILE
