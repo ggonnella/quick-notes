@@ -76,7 +76,7 @@ if [ "$1" == '--help' -o "$1" == "-h" ]; then
   echo > /dev/stderr
   echo $QUICKNOTES_PURPOSE > /dev/stderr
   echo > /dev/stderr
-  echo "Usage: $QUICKNOTES_CMDNAME [$rt<line>|--vi|-t <tag>|${urlopt}-a <tag>|--tags]" > /dev/stderr
+  echo "Usage: $QUICKNOTES_CMDNAME [$rt<line>|--vi|--path|-t <tag>|${urlopt}-a <tag>|--tags]" > /dev/stderr
   echo > /dev/stderr
   echo "Options:" > /dev/stderr
   echo > /dev/stderr
@@ -91,7 +91,8 @@ if [ "$1" == '--help' -o "$1" == "-h" ]; then
     echo "  -u <url>      add an URL to the last line" > /dev/stderr
   fi
   echo "  --tags        list tags used until now" > /dev/stderr
-  echo "  --vi          open in vi editor" > /dev/stderr
+  echo "  --vi          open data file in vi editor" > /dev/stderr
+  echo "  --path        show data file path" > /dev/stderr
   echo > /dev/stderr
   exit 1
 fi
@@ -133,6 +134,8 @@ if [ "$1" == "" ]; then
 elif [ "$1" == '--vi' ]; then
   vi $DATA_FILE
   modified="true"
+elif [ "$1" == '--path' ]; then
+  echo $DATA_FILE
 elif [ "$1" == '-t' ]; then
   grep -i -P "\tTAGS.*[:,]$2($|,)" $DATA_FILE | \
     cut -d$'\t' -f 1 | uniq --group -w 12
