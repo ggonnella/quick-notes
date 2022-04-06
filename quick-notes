@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # version: 1.0
-# (c) Giorgio Gonnella, 2020
+# (c) Giorgio Gonnella, 2020-2022
 
 function push_data_file {
   cd $DATA_DIR
@@ -31,6 +31,7 @@ if [ "$QUICKNOTES_PURPOSE" == "" \
   echo > /dev/stderr
   echo "Variables to set" > /dev/stderr
   echo "- QUICKNOTES_PURPOSE: one-line purpose statement" > /dev/stderr
+  echo "- QUICKNOTES_DATADIR: directory under which to store the data file" > /dev/stderr
   echo "- QUICKNOTES_DATAFILE: data file name" > /dev/stderr
   echo "- QUICKNOTES_CMDNAME: command name" > /dev/stderr
   echo > /dev/stderr
@@ -99,8 +100,19 @@ fi
 
 ### Hard-coded parameters
 
-DATA_DIR=${XDG_DATA_DIR:=$HOME/.local/share}/quick-notes
-mkdir -p $DATA_DIR
+if [ "$QUICKNOTES_DATADIR" == "" ]; then
+  DATA_DIR=${XDG_DATA_HOME:=$HOME/.local/share}/quick-notes
+else
+  DATA_DIR=$QUICKNOTES_DATADIR
+fi
+if [ ! -e $DATA_DIR ]; then
+  echo "Error: data directory '$DATA_DIR' does not exist" > /dev/stderr
+  exit 1
+elif [ ! -d $DATA_DIR/.git ]; then
+  echo "Warning: data directory '$DATA_DIR' is not a git repository" > /dev/stderr
+  echo "Data synchronization feature disabled" > /dev/stderr
+fi
+
 DATA_FILE=$DATA_DIR/$QUICKNOTES_DATAFILE
 touch $DATA_FILE
 
