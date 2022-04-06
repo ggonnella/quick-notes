@@ -99,7 +99,7 @@ fi
 
 ### Hard-coded parameters
 
-DATA_DIR=${XDG_DATA_DIR:=$HOME/.local/share}/ggscripts
+DATA_DIR=${XDG_DATA_DIR:=$HOME/.local/share}/quick-notes
 mkdir -p $DATA_DIR
 DATA_FILE=$DATA_DIR/$QUICKNOTES_DATAFILE
 touch $DATA_FILE
