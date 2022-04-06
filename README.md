@@ -19,11 +19,18 @@ implementation scripts with different purposes are provided in the repository
 # Installation
 
 To install a quick notes implementation, the ``quick-notes`` script and the
-implementation script must be executable and in path. Furthermore a data file
-must be provided, where the script stores the information.
-
-Finally, auto-completion for Bash can be enabled, by sourcing the
+implementation script must be executable and in path.
+Also: an auto-completion for Bash can be enabled, by sourcing the
 ``quick-notes-completion.bash`` file (e.g. in a Bash startup file).
+
+Furthermore, a data file
+must be provided, where the script stores the information. The path to the
+file is by default ``$HOME/.local/share/quick-notes`` but can be changed
+(see below).
+
+The directory where the data file is stored, shall be a
+git directory. The ``origin`` remote must be configured.
+It will be employed as a central repository (e.g on Github).
 
 # Notes metadata
 
@@ -38,6 +45,8 @@ Finally a URL can be associated with a note.
 
 # Configuration
 
+## Mandatory configuration
+
 The following variables must be set before the ``quick-notes`` call:
 - ``QUICKNOTES_PURPOSE``: single line message stating the purpose of the
   implementation script (for use in help messages)
@@ -45,8 +54,10 @@ The following variables must be set before the ``quick-notes`` call:
   repository, in order to enable the synchronization feature
 - ``QUICKNOTES_CMDNAME``: name of the implementation script
 
-Furthermore the following optional variables can be set, to control how notes are
-automatically assigned to groups:
+## Group assignment configuration
+
+Furthermore the following optional variables can be set, to control how notes
+are automatically assigned to groups:
 - ``QUICKNOTES_GRP_HOST=yes``: automatically assign to a group named
 after the hostname (or the value of the env variable
 ``$NETWORK``)
@@ -56,16 +67,21 @@ after the current date
 first word in the command line (while the note itself is the rest of the command
 line).
 
-Finally the following variables are used to configure other aspects of the
-implementation:
+## Other optional configuration
+
+- ``QUICKNOTES_DATADIR``: path to the directory where to store
+  the data file, should be in a git repository; necessary
+  in order to enable the synchronization feature; the default
+  is ``$HOME/.local/share/quick-notes``.
 
 - ``QUICKNOTES_ENABLE_URL=yes``: enable the storage of a URL associated
 with each note, when using the ``-u`` option of quick-notes
 
-# CLI Options
+# Command line interface
 
-When calling an implementation, say``QN``, of ``quick-notes`` from the command line,
-multiple usage options are available.
+When calling an implementation of ``quick-notes`` from the command line,
+multiple usage options are available. In the following sections ``QN``
+is a placeholder for the name of the implementation.
 
 ## Basic usage, without category
 
